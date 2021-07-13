@@ -1,0 +1,231 @@
+\documentclass[centertitle, plain]{notes}
+\usepackage[utf8]{inputenc}
+
+\coursetitle{Introduction to Statistical Inference}
+\coursecode{stat111}
+\subtitle{Textbook Notes}
+\professor{Joe Blitzstein}
+\scribe{Matthew Nazari\titlehref[mailto:matthewnazari@college.harvard.edu]{matthewnazari@college}[email]}
+\season{Summer}
+\year{2021}
+
+\begin{document}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ESTIMATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Estimation}
+
+\subsection{Models and Likelihood}
+\begin{definition}[statistical model]
+  A \it{statistical model} is a family of probability distributions indexed by a parameter $\theta \in \Theta$. The \it{parameter space} $\Theta$ is the set of all allowable parameter values.
+\end{definition}
+The family of all normal distributions, $\{\N(\mu, \sigma^2) : \mu, \sigma \in \R, \sigma > 0\}$, is a 2-dimensional parametric model where $\Theta = \{\theta : \theta \in \R \times \R^+\}$. But models don't have to be named distributions.
+\begin{example}
+   Suppose we have a population of cats and dogs, and we are studying the weight $Y$ of a random animal from the population. Let $p$ be the proportion of cats in the population. Suppose the weight of a random cat and a random dog is $\N(\mu_1, {\sigma_1}^2)$ and $\N(\mu_2, {\sigma_2}^2)$ respectively. Then by the LOTP, the CDF of $Y$ is 
+  \begin{align*}
+    F_Y(y) = P(Y \leq y) &= P(Y \leq y \mid \t{cat})\,P(\t{cat}) + P(Y \leq y \mid \t{dog})\,P(\t{dog}) \\
+                         &= p\,\Phi(\frac{y - \mu_1}{\sigma_1}) + (1-p)\,\Phi(\frac{y - \mu_2}{\sigma_2}).
+  \end{align*}
+  The CDF of $Y$ depends on the parameter $\theta = (p, \mu_1, \sigma_1, \mu_2, \sigma_2)$, so we write it as as $F_Y(y \mid \theta)$. Our model, therefore, is the collection of all CDFs $F_Y(y \mid \theta)$ indexed by $\theta \in \Theta =\{\theta : \theta \in [0, 1] \times (\R \times \R^+)^2\}$. This is a 5-dimensional parametric model.
+\end{example}
+We say our \it{data} is the realization $y_1, \ldots, y_n$ of the random variables $Y_1, \ldots, Y_n$. These random variables $\bm{Y}$ have some unknown, but true, distribution $F_Y(\cdot \mid \theta)$ parametrized by $\theta$. Often times it is plausible to assume $Y_1, \ldots, Y_n$ are i.d.d: $Y_j \iid F_Y(y_j \mid \theta)$. Then, $$F_\bm{Y}(\bm{y} \mid \theta) = \prod_{j=1}^{n} F_{Y_j}(y_j \mid \theta).$$
+\begin{definition}[likelihood function]
+  Suppose we observe $\bm{y}$ to be the value of $\bm{Y}$. The function $L(\theta; \bm{y}) = f_\bm{Y}(\bm{y} \mid \theta)$ is the \it{likelihood function}. It is a funciton of $\theta$ and fixed with $\bm{y}$. The idea here is that we can now compare various candidate distributions on how consistent they are with the \t{observed data} $\bm{y}$. If $L(\theta_1; \bm{y}) > L(\theta_2; \bm{y})$, then the data seems more consistent with $\theta_1$ than $\theta_2$.
+\end{definition}
+We cannot conclude that one value for $\theta$ is more likely than another yet since we have not imposed a probability distribution on $\theta$.
+\begin{itemize}
+  \item In the \it{frequentist perspective}, $\theta$ is regarded as fixed but unknown and it does not have a distribution. One way to approximate $\theta$, then, is to use \t{maximum likelihood estimation} (MLE) which says estimate $\theta$ using $$\hat\theta = \argmax_\theta L(\theta; \bm{y}).$$
+  \item In the \it{Bayesian perspective}, $\theta$ does have a distribution. That is, $\theta$ is an r.v. rather then being fixed but unknown. This allows us to make probability statements about various $\theta$ values when accompanied with further knowledge like prior information. We have a prior density $\pi(\theta)$ for $\theta$ and obtain the posterior density with Bayes' Rule: $$\pi(\theta \mid \bm{y}) = \frac{\pi(\theta)f(\bm{y} \mid \theta)}{f(\bm{y})} \propto \pi(\theta)f(\bm{y} \mid \theta) = L(\theta; \bm{y})\pi(\theta).$$ This means \it{the posterior is proportional to the likelihood times prior}.
+\end{itemize}
+\begin{example}
+  Let $Y \sim \Bin(n, p)$ with $n = 3$ and $p$ unknown. Suppose we observe that $Y = 2$. The likelihood function is then $L(p) = \binom{3}{2}p^2(1-p)$. We don't care about constant scaling since rescaling has no affect on MLE and likelihood ratios. Thus, $L(p) = p^2(1-p)$ and $L(p) = 12p^2(1-p)$ are equally valid ways to express the likelihood function. Note that in a Bayesian appraoch with the prior $p \sim \t{Unif}(0, 1)$, the posterior is the likelihood.
+\end{example}
+\begin{definition}[log-likelihood function]
+  It is common and mathematically convinient to work with the \it{log-likelihood function} $l(\theta; \bm{y}) = \log L(\theta; \bm{y})$ instead of the likelihood function. If the $Y_j$ are i.i.d then $$l(\theta; \bm{y}) = \sum_{j=1}^{n} \log f_{Y_j}(y_j \mid \theta).$$
+\end{definition}
+\begin{theorem}[invariance property of likelihood]
+  The likelihood function is unchanged under reparameterization: namely, consider a likelihood function $L(\theta; \bm{y})$ and let $\psi = g(\theta)$ be a reparameterization, where $g$ is injective. Then $$L(\psi; \bm{y}) = L(\theta; \bm{y}).$$
+\end{theorem}
+
+\subsection{Statistics, Estimands, Estimators, and Estimates}
+\begin{definition}[statistic]
+  A \it{statistic} $T(\bm{Y})$ is a function of $Y_1, \ldots, Y_n$ (and possibly other known quantities). The function $T$ cannot depend on unknown parameters.
+\end{definition}
+\begin{example}
+  Let our data be the realization of the random variables $Y_1, \ldots, Y_n$ where $Y_j \iid F_{Y_j}(y_j \mid \theta)$. The sample mean is a very common statistic: $$T(\bm{Y}) = \bar{Y} = \frac{1}{n} \sum_{j=1}^{n} Y_j.$$ Notice that we can compute $\bar{Y}$ by knowing $Y_1, \ldots, Y_n$, but $\bar{Y}$ still does not depend on the unknown parameter $\theta$. The distribution of $\bar{Y}$, however, can and does depend on $\theta$.
+\end{example}
+\begin{definition}[estimand]
+  An \it{estimand} is an object that we wish to learn about the data. 
+\end{definition}
+\begin{example}[]
+  For each of $n$ individuals we observe two variables. The resulting data are the i.i.d. pairs $(X_1, Y_1), \ldots, (X_n, Y_n)$. Examples of estimands include $\E[Y_1]$, $\Var(Y_1)$, the CDF $F_{Y_1}(y)$, $\corr(X_1, Y_1)$, and the probability $P(\bar{X} < \bar{Y})$.
+\end{example}
+\begin{definition}[estimator]
+  A statistic $\hat\theta = T(\bm{Y})$ constructed with the intention to approximate an estimand $\theta$ is called an \it{estimator}. All estimators are statistics and therefore r.v.s.
+\end{definition}
+\begin{definition}[bias]
+  The \it{bias} of an estimator $\hat\theta$ measures on average how far off an estimator is from the estimand: $$\bias(\hat\theta) = \E[\hat\theta] - \theta.$$ If $\hat\theta$ is \it{unbiased}, then $\bias(\hat\theta) = 0$. Sometimes, unbiased estimators are far more useful and reasonable than biased estimators.
+\end{definition}
+\begin{definition}[standard error]
+  The \it{standard error} of an estimator $\hat\theta$ is its standard deviation: $$\SE(\hat\theta) = \SD(\hat\theta) = \sqrt{\Var(\hat\theta)}.$$
+\end{definition}
+\begin{definition}[estimate]
+  An \it{estimate} is a realization of an estimator. If our data $\bm{y}$ are a realization of $\bm{Y}$ and $T(\bm{Y})$ is an estimator for some estimand $\theta$, then $T(\bm{y})$ is an estimate of $\theta$.
+\end{definition}
+
+\subsection{Method of Moments}
+\begin{definition}[sample moment]
+  For a statistical model that $Y_1, \ldots, Y_n$ are i.d.d., then the \it{$k$-th sample moment} $$M_k = \frac{1}{n}\sum_{j=1}^{n} {Y_j}^k$$ is an estimator $\hat\theta = M_k$ of the $k$-th moment $\theta = \E[{Y_1}^k]$. The $k$-th sample moment $M_k$ has properties (if $\Var({Y_1}^k) < \infty$) $\bias(M_k) = 0$ and $\Var(M_k) = \Var({Y_1}^k)/n$.
+\end{definition}
+The idea of \it{method of moments} (MoM)  is to express the estimand in terms of moments and then directly replace the estimand with the estimator and the moments by the sample moments.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% QUALITY OF ESTIMATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Quality of Estimation}
+
+\subsection{Loss Functions}
+\begin{definition}[loss function]
+  A \it{loss function} $L(\theta, \hat\theta)$ is the loss associated with using the estimator $\hat\theta$ when the true parameter value is $\theta$. We require  $L(\theta, \hat\theta) \geq 0$ and $L(\theta, \theta) = 0$. The expected loss is $\E[L(\theta, \hat\theta)]$.
+\end{definition}
+\begin{definition}[mean square error, MSE]
+  The loss funciton $L(\theta, \hat\theta) = (\hat\theta - \theta)^2$ is called the \it{squared error loss} and its expected value is the \it{mean square error} (MSE): $$\MSE(\hat\theta) = \E[\hat\theta - \theta]^2.$$ The square root of the MSE is sometimes used and is called the \it{root mean square error} (RMSE).
+\end{definition}
+\begin{definition}[mean absolute error, MAE]
+  The loss funciton $L(\theta, \hat\theta) = |\hat\theta - \theta|$ is called the \it{absolute error loss} and its expected value is the \it{mean absolute error} (MAE): $$\MAE(\hat\theta) = \E[|\hat\theta - \theta|].$$
+\end{definition}
+Squared error loss punishes large errors more severely than absolute error loss. Mathematically, square error loss is easier to work with because its derivative is continuous. Because of this, the square error loss is much more widely used.
+\begin{definition}[0-1 loss]
+  The loss funciton $L(\theta, \hat\theta) = I(\hat\theta \neq \theta)$ is called the \it{0-1 loss} and its expected value is $P(\hat\theta \neq \theta)$. This loss function is useful when the estimator is only ever right or wrong.
+\end{definition}
+
+\subsection{Bias-Variance Tradeoff}
+Ideally, we want our estimator $\hat\theta$ to have a low bias and a low variance. However, often times there is a trade off between these two in estimation. This situation is ubiquitous in machine learning and data science.
+\begin{theorem}
+  The mean square error of an estimator $\hat\theta$ is the variance plus the square of the bias: $$\MSE(\hat\theta) = \Var(\hat\theta) + (\bias(\hat\theta))^2.$$
+  % \begin{proof}
+  %   \begin{align*}
+  %     \MSE(\hat\theta) &= E(\hat\theta - \theta)^2 \\
+  %                      &= \Var(\hat\theta - \theta) + (E(\hat\theta - \theta))^2 \\
+  %                      &= \Var(\hat\theta - \theta) + (E(\hat\theta) - \theta)^2 \\
+  %                      &= \Var(\hat\theta) + (\bias(\hat\theta))^2.
+  %   \end{align*}
+  % \end{proof}
+\end{theorem}
+\begin{example}
+  For i.i.d. data $Y_1, \ldots, Y_n$ with mean $\mu$ and variance $\sigma^2$, then $\bar{Y}$ is unbiased and $\MSE(\bar{Y}) = \Var(\bar{Y}) = \sigma^2/n$. This means $\MSE(\bar{Y}) \to 0$ as $n \to \infty$.
+\end{example}
+
+\subsection{Consistency of Estimators}
+\begin{definition}[consistent]
+  An estimator $\hat\theta$ is \it{consistent} if it converges in probability to $\theta$ as the sample size $n \to \infty$. Namely, for every $\epsilon > 0$ we have $$P(|\hat\theta - \theta| \geq \epsilon) \to 0$$ as $n \to \infty$. In shorthand, this is expressed as $\hat\theta \pto \theta$. 
+\end{definition}
+\begin{example}
+  Let $Y_1, \ldots, Y_n$ be i.i.d. There are infinitely many consistent estimators for $\E[Y_1]$. Most simply, $\bar{Y}$ is consistent by the strong law of large numbers. While a very inefficient use of the data, discarding odd numbered data and taking the mean of all even data is also consistent: $$\frac{1}{\lfloor n/2 \rfloor} \sum_{k=1}^{\lfloor n/2 \rfloor} Y_{2k}.$$ Adding a second term to any consistent estimator that converges to $0$ as $n$ approaches $\infty$ gives us a ridiculous yet consistent estimator like $$\bar{Y} + \frac{10^{100}}{\sqrt{n}}.$$
+\end{example}
+\begin{theorem}
+  If $\MSE(\hat\theta) \to 0$ for some estimator $\hat\theta$ as the sample size $n \to \infty$, then $\hat\theta$ is consistent.
+\end{theorem}
+\begin{theorem}
+  If $g$ is a continuous function and $\hat\theta \pto \theta$, then $g(\hat\theta) \pto g(\theta)$.
+\end{theorem}
+\begin{example}
+  If $S^2 \pto \Var(Y_1) > 0$, then $S \pto \sqrt{\Var(Y_1)} = \SD(Y_1)$ and $S^{-1} \pto 1/\SD(Y_1)$.
+\end{example}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% MAXIMUM LIKELIHOOD ESTIMATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Maximum Likelihood Estimation}
+\begin{definition}[maximum likelihood estimate]
+  The \it{maximum likelihood estimate} of parameter $\theta$ is the value $\hat\theta$ that maximizes the likelihood function: $$\hat\theta = \argmax_\theta L(\theta; \bm{y}).$$ This parameter value is the most consistent with the data since it makes the observed data as probable as possible. The corresponding estimator is called the \it{maximum likelihood estimator}: $$\hat\theta = \argmax_\theta L(\theta; \bm{Y}).$$
+\end{definition}
+\begin{example}
+  Consider a model $Y \sim \Bin(N, p)$ with $n$ known and $\theta = p$ unknown. This is only a sample size of 1. Dropping the binomial coefficient since it acts as a constant, $$l(p; y) = \log L(p; y) = \log(p^y(1-p)^{n-y}) = y \log p + (n-y)\log(1-p).$$ To find the MLE $\hat{p}$, we set the derivative of $l(p; y)$ to 0 and rearrange for $\hat{p}$:
+  \begin{gather*}
+    l'(p; y) = \der{l(p; y)}{p} = \frac{y}{p} - \frac{n-y}{1-p}, \\
+    \frac{y}{\hat{p}} - \frac{n-y}{1-\hat{p}} = 0 \implies \hat{p} = \frac{y}{n}.
+  \end{gather*}
+  With the second derivative test, we know that $p = \hat{p}$ is a local maximum. Moreso, the log-likelihood is globally concave since $l''(p; y) = -\frac{y}{p^2} - \frac{n-y}{(1-p)^2} < 0$, meaning $\hat{p}$ is a global maximum and thus the unique MLE. To assess the MLE, we can compute that $\hat{p}$ is unbiased and decreases to 0 at a rate of $\sqrt{n}$ as $n \to \infty$:
+  \begin{gather*}
+    \bias(\hat{p}) = \E[\hat{p}] - p = \frac{\E[Y]}{n} - p = \frac{np}{n} - p = 0, \\
+    \SE(\hat{p}) = \sqrt{\Var(\hat{p})} = \sqrt{\frac{\Var(Y)}{n^2}} = \sqrt{\frac{np(1-p)}{n^2}} = \frac{c}{\sqrt{n}}
+  \end{gather*}
+\end{example}
+
+\subsection{Properties of the MLE}
+Remember that the MLE is just one of many estimators. While other estimators may be preferable over the MLE, the MLE tends to work well in theory and practice. And in using the MLE, we get many useful properties.
+\begin{theorem}[invariance of MLE]
+  Let $\hat\theta$ be the MLE of $\theta$, and let $g$ be an injection. Then the MLE of $g(\theta)$ is $g(\hat\theta)$. This follows directly from the invariance property of likelihood. 
+\end{theorem}
+\begin{definition}[invariance of MLE for non-injective transformations]
+  If $\hat\theta$ is the MLE of $\theta$ and $g$ is not an injection, then we define the MLE of $g(\theta)$ to be $g(\hat\theta)$ since the invariance of the MLE is so convinient.
+\end{definition}
+\begin{example}
+  Let $Y_1, \ldots, Y_n \iid \N(\mu, \sigma^2)$, with both parameters unknown. We can parametrize the model in terms of the mean and the standard deviation, $\theta = (\mu, \sigma)$, and let this be our estimand. (We can parametrize the model however we want. The MLE of $\mu$ and $\sigma$ will be the same because of the invariance property of likelihood). We calculate that (removing the constant factor of the normal PDF)
+  \begin{align*}
+    l(\mu, \sigma; \bm{Y}) = \log L(\mu, \sigma; \bm{Y}) &= \log \prod_{j=1}^{n} \frac{1}{\sigma} \exp\left(-\frac{1}{2\sigma^2}(Y_j - \mu)\right) \\
+    &= \log \left( \frac{1}{\sigma^n} \exp\left(-\frac{1}{2\sigma^2} \sum_{j=1}^{n}(Y_j - \mu)^2\right)\right) \\
+    &=-\frac{1}{2\sigma^2} \left( \sum_{j=1}^{n}(Y_j - \bar{Y})^2 + n(\bar{Y} - \mu)^2 \right) - n\log\sigma.
+  \end{align*}
+  Maximizing this function using multivariable calculus gives $$\hat\theta = \left( \bar{Y},\; \sqrt\frac{\sum_{j=1}^{n}(Y_j-\bar{Y})^2}{n} \right)$$ as the MLE of $\theta$. Notice that $\hat\mu$ is just the sample mean and $\hat\sigma$ is the sample standard deviation. By the invariance of MLE, the MLE of $\sigma^2$ is simply $\hat\sigma^2$. Extending the example, suppose that $Y_j$ is the height of the $j$th individual in feet and our new estimand is the probability of someone being more than six feet tall: $$\theta = P(Y_j > 6) = P(Y_1 > 6) = 1 - P(Y_1 \leq 6) = 1 - \Phi\left( \frac{6 - \mu}{\sigma} \right).$$ To get the MLE of $\theta$, invariance explains that we simply make the parameters don hats: $$\hat\theta = 1 - \Phi\left( \frac{6 - \hat\mu}{\hat\sigma} \right).$$
+\end{example}
+
+\subsection{Kullback-Leibler Divergence}
+
+In order to eliminate confusion, we summarize the usage of three different thetas:
+\begin{itemize}
+  \item $\theta^*$ is the true value or estimand generating $\bm{Y}$ through $F_\bm{Y}(\bm{y} \mid \theta^*)$,
+  \item $\theta$ is the argument in the likelihood $L(\theta; \bm{Y})$ and log-likelihood $l(\theta; \bm{Y})$, and
+  \item $\hat\theta = \underset{\theta}{\argmax}\, l(\theta; \bm{Y})$ is an estimator of $\theta^*$.
+\end{itemize}
+It is useful to measure the expected log-likelihood of data evaluated at $\theta$: $$\E[l(\theta; \bm{Y})] = \int l(\theta, \bm{y})f_\bm{Y}(\bm{y} \mid \theta^*) \,d\bm{y}.$$ This means high likelihoods of data tend to pop up for values of $\theta$ near $\theta^*$. We can show that this expectation is globally maximized at $\theta^*$ even in models where the data are not i.i.d.
+
+\begin{definition}[Kullback-Leibler divergence]
+  The \it{Kullback-Leibler divergence} (or \it{distance}) from $F_\bm{Y}(\bm{y} \mid \theta^*)$ to $F_\bm{Y}(\bm{y} \mid \theta)$ is $$K(\theta^*, \theta) = \E \left[ \log\frac{L(\theta^*; \bm{Y})}{L(\theta; \bm{Y})} \right] = \E[l(\theta^*; \bm{Y}) - l(\theta; \bm{Y})]$$ computed under the distribution $\bm{Y} \sim F_\bm{Y}(\bm{y} \mid \theta^*)$. The Kullback-Leibler divergence measures the impact on expected log-likelihood if we use an approximate distribution in place of the true distribution.
+\end{definition}
+\begin{theorem}
+  The Kullback-Leibler divergence is non-negative and globally minimized at 0 when $\theta = \theta^*$: For any $\theta \neq \theta^*$, $K(\theta^*, \theta) > 0$. If $\theta = \theta^*$, $K(\theta^*, \theta) = 0$.
+\end{theorem}
+
+This result means that $\E[l(\theta; \bm{Y})]$ is maximized at $\theta = \theta^*$, hence shedding light on why MLE is useful. The MLE $\hat\theta$ maximizes the \it{observed} log-likelihood function, while $\theta^*$ maximizes the \it{expected} log-likelihood function. Using the MLE exploits that the log-likelihood will tend to have its peak near $\theta^*$.
+
+
+%%%%%%%% https://www.youtube.com/watch?v=SxGYPqCgJWM
+
+
+\subsection{Fisher Information}
+\begin{definition}[score function]
+  The \it{score function} is $$s(\theta; \bm{y}) = \der{l(\theta; \bm{y})}{\theta} = \frac{1}{L(\theta; \bm{y})}\der{L(\theta; \bm{y})}{\theta}.$$
+\end{definition}
+
+We've seen the score function already; solving $s(\theta; \bm{y}) = 0$ gives the MLE. Note that the score function can also be fixed for the true value $\theta^*$ and vary randomly with the data $\bm{Y}$: $s(\theta^*; \bm{Y})$. (This, however, is not a statistic since it depends on the unknown true value).
+
+\begin{theorem}
+  Under some regularity conditions, $\E[s(\theta^*; \bm{Y})] = 0$ and $\Var(s(\theta^*; \bm{Y})) = -\E[s'(\theta^*; \bm{Y})].$
+\end{theorem}
+\begin{definition}[Fisher information]
+  The \it{Fisher informaiton} in the sample for a parameter $\theta$ is $$\I_\bm{Y}(\theta) = \Var(s(\theta; \bm{Y})) = \E[s(\theta; \bm{Y})^2] = -\E[s'(\theta; \bm{Y})].$$ where we compute the assumption that the true parameter is $\theta$. 
+\end{definition}
+
+If the log-likelihood has a stronger peak at the MLE, the data seems very informative. The Fisher information captures the amount of this curvature: it is the average value of the curvature of the log-likelihood averaged over all possible datasets. In some sense, it is the average amount of information that the data has to offer about the parameter.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% BAYESIAN STATISTICAL INFERENCE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Bayesian Statistical Inference}
+
+The \it{Bayesian} approach to statsitics gives the parameter $\theta$ of the model a distribution to reflect our uncertainty about it. We say ``there is a 30\% chance of rain tomorrow'' even though this is not true. It will only rain or not rain, we just don't know which. If we knew enough about meteorology and had enough computational power, we can exactly determine whether it will rain or not tomorrow. This does not reflect reality, so we use the knowledge we can obtain to determine a best guess to whether it will rain or not. The same goes with $\theta$: even though it is fixed but unknown, treating it like a random variable reflects our uncertainty about it. 
+
+\subsection{Prior to Posterior}
+\begin{theorem}
+  Consider a parametric model $f(\bm{y} \mid \theta)$ for data $\bm{y}$, and let $\pi(\theta)$ be the prior density on the parameter $\theta$. Then the posterior density for $\theta$ is proportional to the likelihood times the prior: $$\pi(\theta \mid \bm{y}) = \frac{L(\theta; \bm{y})\pi(\theta)}{f(\bm{y})}  \propto L(\theta; \bm{y})\pi(\theta).$$
+\end{theorem}
+
+\end{document}
